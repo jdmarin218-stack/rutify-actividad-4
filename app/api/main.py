@@ -19,7 +19,7 @@ from app.application.use_cases.asignar_repartidor import (
     EntregaNoEncontradaError,
     RepartidorSinCapacidadError,
 )
-from app.domain.entities import Entrega, EntregaYaAsignadaError
+from app.domain.entities import Entrega, EntregaYaAsignadaError, TransicionInvalidaError
 from app.infrastructure.db.repository import SqlEntregaRepository
 
 logger = logging.getLogger("rutify.entregas")
@@ -30,12 +30,10 @@ app = FastAPI(title="Rutify - Actividad 4")
 
 @app.post("/entregas", response_model=EntregaResponse, status_code=201)
 def crear_entrega(request: CrearEntregaRequest, db: Session = Depends(get_db)):
-    """Crea una entrega pendiente. En el sistema real esto vendría de
-    un pedido ya confirmado en el Contexto de Pedidos."""
+    """Crea una entrega pendiente. En el sistema real esto vendría de un pedido ya confirmado en el Contexto de Pedidos."""
     entrega = Entrega.nueva(direccion_destino=request.direccion_destino)
     repositorio = SqlEntregaRepository(db)
     repositorio.guardar(entrega)
-
     logger.info("entrega_creada entrega_id=%s", entrega.id)
     return entrega
 
@@ -47,7 +45,6 @@ def asignar_repartidor(
     db: Session = Depends(get_db),
 ):
     caso_de_uso = get_asignar_repartidor_use_case(db)
-
     try:
         entrega = caso_de_uso.ejecutar(entrega_id, request.repartidor_id)
     except EntregaNoEncontradaError as error:
@@ -58,6 +55,10 @@ def asignar_repartidor(
         raise HTTPException(status_code=409, detail=str(error))
     except EntregaYaAsignadaError as error:
         logger.warning("asignacion_rechazada entrega_id=%s motivo=ya_asignada", entrega_id)
+        raise HTTPException(status_code=409, detail=str(error))
+    except TransicionInvalidaError as error:
+        # la entrega existe pero su estado no permite asignarla (por ejemplo, ya fue entregada)
+        logger.warning("asignacion_rechazada entrega_id=%s motivo=transicion_invalida", entrega_id)
         raise HTTPException(status_code=409, detail=str(error))
 
     logger.info("repartidor_asignado entrega_id=%s repartidor_id=%s", entrega_id, request.repartidor_id)

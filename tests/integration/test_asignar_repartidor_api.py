@@ -8,7 +8,9 @@ unitarias.
 """
 import uuid
 
-from app.api.dependencies import disponibilidad_repartidor
+from app.api.dependencies import disponibilidad_repartidor, get_db
+from app.api.main import app
+from app.infrastructure.db.models import EntregaModel
 
 
 def _crear_entrega(client, direccion="Calle 50 #30-20, Medellín") -> dict:
@@ -77,3 +79,25 @@ def test_repartidor_sin_capacidad_responde_409_y_no_toca_la_entrega(client):
     aceptada = client.post(url, json={"repartidor_id": str(uuid.uuid4())})
     assert aceptada.status_code == 200
     assert aceptada.json()["estado"] == "Asignada"
+
+
+def test_entrega_que_no_esta_pendiente_responde_409_y_no_500(client):
+    entrega = _crear_entrega(client)
+
+    # no hay endpoint que cambie el estado, así que la dejamos "Entregada"
+    # directo en la base de pruebas, como si otro proceso lo hubiera hecho
+    db = next(app.dependency_overrides[get_db]())
+    try:
+        fila = db.get(EntregaModel, entrega["id"])
+        fila.estado = "Entregada"
+        db.commit()
+    finally:
+        db.close()
+
+    respuesta = client.post(
+        f"/entregas/{entrega['id']}/asignar-repartidor",
+        json={"repartidor_id": str(uuid.uuid4())},
+    )
+
+    assert respuesta.status_code == 409
+    assert "No se puede asignar repartidor" in respuesta.json()["detail"]
