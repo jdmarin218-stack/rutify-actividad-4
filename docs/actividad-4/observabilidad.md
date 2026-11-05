@@ -13,6 +13,7 @@ Cada evento del flujo deja una línea de log con el logger `rutify.entregas`. So
 | `asignacion_rechazada entrega_id=... motivo=no_encontrada` | WARNING | La entrega no existe (respuesta 404). |
 | `asignacion_rechazada entrega_id=... motivo=sin_capacidad` | WARNING | El repartidor no tiene capacidad (respuesta 409). |
 | `asignacion_rechazada entrega_id=... motivo=ya_asignada` | WARNING | La entrega ya tenía repartidor (respuesta 409). |
+| `asignacion_rechazada entrega_id=... motivo=transicion_invalida` | WARNING | La entrega existe pero su estado no permite asignarla (respuesta 409). |
 
 Además, el servidor (`uvicorn`) registra una línea por petición con el método, la ruta y el código HTTP.
 
@@ -30,6 +31,8 @@ Salida del servidor al ejecutar el flujo completo (crear, asignar, reintentar, e
 
 Se puede seguir la historia de una entrega buscando su `entrega_id` en el log: se ve que se asignó y que luego un segundo intento fue rechazado.
 
+Los motivos `sin_capacidad` y `transicion_invalida` no se capturaron en el servidor real, porque no se pueden provocar desde la API; se verifican con pruebas de integración (códigos de respuesta, no el texto del log).
+
 ## Cómo diagnosticar con estas señales
 
 | Síntoma | Qué buscar en el log | Causa probable |
@@ -37,15 +40,20 @@ Se puede seguir la historia de una entrega buscando su `entrega_id` en el log: s
 | Un cliente recibe 404 | `motivo=no_encontrada` con el `entrega_id` | El identificador es incorrecto o la entrega nunca se creó. |
 | Un cliente recibe 409 | `motivo=ya_asignada` | Reintento o doble clic sobre una entrega que ya tenía repartidor. |
 | Un cliente recibe 409 | `motivo=sin_capacidad` | El repartidor está saturado; hay que elegir otro. |
+| Un cliente recibe 409 | `motivo=transicion_invalida` | La entrega ya no está pendiente (por ejemplo, ya fue entregada). |
 | Una entrega aparece asignada sin que nadie la pidió | `repartidor_asignado` con ese `entrega_id` | Muestra cuándo y con qué repartidor se asignó. |
 
 ## Qué no se registra
 
 Las direcciones de destino no aparecen en ningún log. Hoy esto se verifica revisando las llamadas a `logger` en `app/api/main.py`; no hay una prueba automática (riesgo R6).
 
+## Hallazgo corregido durante la actividad
+
+Al documentar las señales se detectó que `TransicionInvalidaError` no se capturaba en el endpoint: si la entrega no estaba Pendiente, la API respondía 500 sin una línea propia de `rutify.entregas`. Se corrigió para que responda 409 y registre `motivo=transicion_invalida`, y se agregó la prueba `test_entrega_que_no_esta_pendiente_responde_409_y_no_500`.
+
 ## Limitaciones conocidas
 
-- **Hueco en el manejo de errores.** `TransicionInvalidaError` (asignar repartidor a una entrega que no está Pendiente) no se captura en el endpoint. Hoy ningún camino de la API puede producirla, porque no existe un endpoint que cambie el estado, pero si ocurriera respondería 500 sin una línea propia de `rutify.entregas`.
 - No hay identificador de correlación por petición; se cruzan las líneas por `entrega_id`.
 - Los logs son texto plano, no JSON, y no hay métricas ni trazas distribuidas (no se usó OpenTelemetry).
 - No hay prueba automática de que los logs omitan datos sensibles.
+- Las pruebas verifican los códigos de respuesta, no el contenido exacto de las líneas de log.
