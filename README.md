@@ -30,7 +30,9 @@ app/
 tests/
   unit/            invariantes del dominio y chequeo de arquitectura
   integration/     flujo completo por HTTP contra SQLite en memoria
-docs/actividad-4/  riesgos, decisiones tecnológicas y observabilidad
+docs/
+  expediente.md    decisiones y diagramas de las actividades 1 a 4
+  actividad-4/     trazabilidad, decisiones, riesgos y observabilidad
 ```
 
 Las dependencias van hacia adentro: el dominio no conoce a nadie, la aplicación solo conoce el dominio y los puertos, y la infraestructura implementa esos puertos. El archivo `app/api/dependencies.py` es el único lugar donde se conectan los puertos con sus implementaciones concretas.
@@ -71,8 +73,10 @@ La salida incluye un aviso de deprecación de Starlette sobre `httpx`; está reg
 
 ## Documentación
 
-- [Registro de riesgos](docs/actividad-4/riesgos.md): riesgos, mitigaciones, evidencia y riesgos residuales.
+- [Expediente arquitectónico](docs/expediente.md): decisiones y diagramas de las Actividades 1 a 4, y qué pasó con cada decisión al implementar.
+- [Trazabilidad](docs/actividad-4/trazabilidad.md): de cada elemento del diseño de la Actividad 3 al código y a la prueba que lo verifica, y lo que no se implementó.
 - [Decisiones tecnológicas](docs/actividad-4/decisiones-tecnologicas.md): qué patrones aplican y cuáles no, y los ajustes frente al diseño de la Actividad 3.
+- [Registro de riesgos](docs/actividad-4/riesgos.md): riesgos, mitigaciones, evidencia y riesgos residuales.
 - [Observabilidad](docs/actividad-4/observabilidad.md): señales de log, evidencia real y cómo diagnosticar con ellas.
 
 El diseño del dominio, el glosario y los diagramas están en el repositorio de la Actividad 3 (`rutify-actividad-3`).
