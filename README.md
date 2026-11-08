@@ -86,6 +86,7 @@ La salida incluye un aviso de deprecación de Starlette sobre `httpx`; está reg
 - [Decisiones tecnológicas](docs/actividad-4/decisiones-tecnologicas.md): qué patrones aplican y cuáles no, y los ajustes frente al diseño de la Actividad 3.
 - [Registro de riesgos](docs/actividad-4/riesgos.md): riesgos, mitigaciones, evidencia y riesgos residuales.
 - [Observabilidad](docs/actividad-4/observabilidad.md): señales de log, evidencia real y cómo diagnosticar con ellas.
+- [Evidencia de ejecución](docs/actividad-4/evidencia-ejecucion.md): salida real de la migración y de las 11 pruebas desde un clon limpio.
 
 El diseño del dominio, el glosario y los diagramas están en el repositorio de la Actividad 3 (`rutify-actividad-3`).
 
