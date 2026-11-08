@@ -27,9 +27,11 @@ app/
   application/     caso de uso AsignarRepartidor y puertos (contratos)
   domain/          entidad Entrega, estados e invariantes
   infrastructure/  repositorio SQLAlchemy/SQLite y adaptador de disponibilidad
+migrations/        migraciones de Alembic (esquema versionado de la base)
+alembic.ini        configuración de Alembic
 tests/
   unit/            invariantes del dominio y chequeo de arquitectura
-  integration/     flujo completo por HTTP contra SQLite en memoria
+  integration/     flujo completo por HTTP contra SQLite en memoria y prueba de migraciones
 docs/
   expediente.md    decisiones y diagramas de las actividades 1 a 4
   actividad-4/     trazabilidad, decisiones, riesgos y observabilidad
@@ -49,13 +51,19 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
+Crear la base de datos aplicando las migraciones (solo la primera vez, o cuando haya migraciones nuevas):
+
+```powershell
+alembic upgrade head
+```
+
 Levantar el servidor:
 
 ```powershell
 uvicorn app.api.main:app --reload
 ```
 
-Luego abre http://127.0.0.1:8000/docs para probar los endpoints desde Swagger. La base de datos `rutify.db` se crea sola la primera vez que arranca el servidor.
+Luego abre http://127.0.0.1:8000/docs para probar los endpoints desde Swagger. El servidor ya no crea las tablas por su cuenta: si se salta el paso de `alembic upgrade head`, los endpoints fallarán porque la tabla `entregas` no existe.
 
 ## Pruebas
 
@@ -63,10 +71,10 @@ Luego abre http://127.0.0.1:8000/docs para probar los endpoints desde Swagger. L
 pytest tests -v
 ```
 
-Son 10 pruebas:
+Son 11 pruebas:
 
 - **Dominio (3):** invariantes de la entidad `Entrega`.
-- **Integración (5):** flujo completo por HTTP, doble asignación, entrega inexistente, repartidor sin capacidad y entrega que no está pendiente.
+- **Integración (6):** flujo completo por HTTP, doble asignación, entrega inexistente, repartidor sin capacidad, entrega que no está pendiente y una prueba de migraciones que aplica Alembic sobre una base vacía y comprueba que el esquema coincide con los modelos.
 - **Arquitectura (2):** el dominio y la aplicación no importan infraestructura, API ni frameworks.
 
 La salida incluye un aviso de deprecación de Starlette sobre `httpx`; está registrado como riesgo R7 y no afecta los resultados.
@@ -84,7 +92,7 @@ El diseño del dominio, el glosario y los diagramas están en el repositorio de 
 ## Limitaciones conocidas
 
 - La disponibilidad del repartidor es una **simulación** en memoria; el servicio real de Ruteo no existe en este proyecto.
-- El esquema se crea con `create_all`, sin migraciones versionadas.
+- Las migraciones cubren una sola versión del esquema (la tabla `entregas`) sobre SQLite; en un entorno real se repetiría el mismo mecanismo contra la base del servidor.
 - No hay autenticación ni protección contra asignaciones concurrentes sobre la misma entrega.
 
 El detalle y los siguientes pasos están en el registro de riesgos.

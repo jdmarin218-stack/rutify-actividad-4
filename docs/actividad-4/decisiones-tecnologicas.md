@@ -24,7 +24,7 @@ El enunciado aclara que no se espera aplicar todos los patrones, sino justificar
 |---|---|
 | Monorepos con Pants (V3) | Hay un solo servicio en un solo repositorio. |
 | Strangler Fig (V14) | No hay un sistema legado que migrar. Sería útil si Rutify reemplazara poco a poco otro sistema. |
-| Migraciones con Flyway (V15) | Es una herramienta de otro ecosistema. La necesidad sí existe y quedó como riesgo R4: hoy el esquema se crea con `create_all`. El equivalente en Python sería Alembic. |
+| Migraciones con Flyway (V15) | Se aplicó la idea con la herramienta del ecosistema Python: Alembic. La migración `0001` crea la tabla `entregas`, `alembic check` detecta si los modelos se desalinean de la migración y una prueba automática lo verifica. Se cierra así el riesgo R4. |
 | Infraestructura como código (V18) | No hay despliegue ni varios servicios que aprovisionar. |
 | API Gateway (V16) | Con un solo servicio, FastAPI es la entrada directa. Un gateway agregaría un salto sin resolver un problema real. |
 | Mensajes vs eventos, productor-consumidor, Dead Letter Queue, Comparing Consumers, Process Manager (V19 a V23) | El flujo es síncrono: la disponibilidad del repartidor se consulta y se responde en la misma petición. Si el servicio real de Ruteo fuera asíncrono, aquí entrarían los eventos, los reintentos y las colas de mensajes fallidos. |
