@@ -100,4 +100,4 @@ El detalle y los siguientes pasos están en el registro de riesgos.
 
 ## Video de sustentación
 
-Enlace: _pendiente de publicar_
+Enlace: [Video de sustentación](https://correoitmedu-my.sharepoint.com/:f:/g/personal/julianmarin1127347_correo_itm_edu_co/IgAjKe9gHRxkTLjf2aqkdoPwAe3HmCPRwwmESxd1mLVox2s?e=pjCnyv)
